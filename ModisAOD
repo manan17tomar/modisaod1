@@ -1,0 +1,46 @@
+var AOD = ee.ImageCollection("MODIS/006/MCD19A2_GRANULES")
+                     .select(['Optical_Depth_055'])
+                     .filter(ee.Filter.date('2018-01-01' , '2018-01-31'));
+Map.addLayer (ROI, {Colour: 'red'},"india_st");
+Map.centerObject(ROI, 9);
+var AODAvg = AOD.reduce(ee.Reducer.mean());
+var AODClip = AODAvg.clip(ROI);
+var maxPixels;
+Map.addLayer(AODAvg.clip(ROI),{} , "AOD india_st");
+// Define the chart and print it to the console.
+var chart =
+  ui.Chart.image
+    .series({
+      imageCollection: AOD,
+      region: ROI,
+      reducer: ee.Reducer.mean(),
+      scale: maxPixels,
+      xProperty:'system:time_start'
+      })
+      .setSeriesNames(['Aerosal optical Depth'])
+      .setChartType('ColumnChart')
+      .setOptions({
+        title: 'Time Series of AOD from MODIS',
+        hAxis: {title: 'Date', titleTextStyle: {italic: false, bold: true}},
+        vAxis: {
+        title: 'AOD value',
+        titleTextStyle: {italic: false, bold: true}
+        },
+        linewidth: 5,
+        colour:['#ffd45c'],
+        curveType: 'function'
+        });
+print(chart); 
+  
+Export.image.toDrive({
+    image: AODClip,
+    folder:'AOD',
+    description: 'AODImage20182',
+    crs:'EPSG:4326',
+    region: ROI,
+    fileFormat: 'GeoTIFF',
+    formatOptions: {
+      cloudOptimized: true
+    }
+    });
+    
